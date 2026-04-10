@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0F6E56"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Milo"/>
+<title>Milo · Órdenes de Pedido</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f3;min-height:100vh;max-width:480px;margin:0 auto;position:relative}
+:root{--verde:#0F6E56;--verde-claro:#1D9E75;--verde-bg:#EAF3DE;--verde-text:#3B6D11;--rojo:#E24B4A;--rojo-bg:#FCEBEB;--azul:#185FA5;--azul-bg:#E6F1FB;--gris:#f0f4f3;--borde:#e0e7e5}
+
+/* HEADER */
+.header{background:var(--verde);color:white;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.logo{width:34px;height:34px;border-radius:9px;background:white;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--verde);flex-shrink:0}
+.header-text h1{font-size:18px;font-weight:600;line-height:1}
+.header-text p{font-size:11px;opacity:.8;margin-top:1px}
+.btn-back{background:rgba(255,255,255,.2);border:none;color:white;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;margin-right:4px}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;min-height:calc(100vh - 58px)}
+.screen.active{display:flex}
+
+/* TABS */
+.tabs{display:flex;background:white;border-bottom:1px solid var(--borde);position:sticky;top:58px;z-index:99}
+.tab{flex:1;padding:10px 0;font-size:12px;text-align:center;color:#888;cursor:pointer;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none}
+.tab.active{color:var(--verde);border-bottom-color:var(--verde);font-weight:600}
+
+/* CARDS */
+.body{padding:12px;flex:1}
+.card{background:white;border-radius:14px;border:1px solid var(--borde);padding:14px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+
+/* FORMS */
+.field{margin-bottom:10px}
+.field label{display:block;font-size:11px;color:#666;margin-bottom:4px;font-weight:500}
+input[type=text],input[type=date],input[type=password],select,textarea{
+  width:100%;font-size:14px;padding:9px 12px;border:1px solid var(--borde);
+  border-radius:10px;background:white;color:#222;outline:none;
+  -webkit-appearance:none;appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--verde)}
+textarea{resize:none;height:60px}
+
+/* BUTTONS */
+.btn-primary{width:100%;padding:13px;background:var(--verde);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer}
+.btn-primary:active{opacity:.85}
+.btn-secondary{width:100%;padding:11px;background:transparent;color:var(--verde);border:1.5px solid var(--verde);border-radius:12px;font-size:14px;cursor:pointer;margin-top:8px}
+.btn-outline{padding:8px 16px;background:transparent;color:var(--verde);border:1px solid var(--verde);border-radius:9px;font-size:13px;cursor:pointer}
+
+/* STEPS */
+.steps{display:flex;align-items:center;justify-content:center;gap:5px;padding:8px;background:white;border-bottom:1px solid var(--borde)}
+.step-dot{width:8px;height:8px;border-radius:50%;background:#ddd}
+.step-dot.done{background:var(--verde)}
+.step-dot.active{background:var(--verde);width:20px;border-radius:4px}
+
+/* GPS */
+.gps-badge{display:inline-flex;align-items:center;gap:6px;background:var(--verde-bg);color:var(--verde-text);font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid #c5e0b4;margin-top:6px}
+.gps-dot{width:8px;height:8px;border-radius:50%;background:var(--verde-claro);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* SCANNER */
+.scan-box{background:#f8faf9;border-radius:12px;border:1.5px dashed #b0cfc7;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:10px}
+.scan-icon-wrap{width:52px;height:52px;border-radius:12px;background:var(--verde-bg);display:flex;align-items:center;justify-content:center}
+.btn-scan{padding:9px 22px;background:var(--verde);color:white;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+.manual-row{display:flex;gap:6px;width:100%}
+.manual-row input{flex:1}
+.manual-row button{padding:9px 14px;background:#f0f4f3;border:1px solid var(--borde);border-radius:10px;font-size:12px;cursor:pointer;white-space:nowrap;color:#444}
+
+/* PRODUCTOS */
+.prod-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #f0f4f3}
+.prod-row:last-child{border-bottom:none}
+.prod-info{flex:1}
+.prod-name{font-size:13px;font-weight:600;color:#222}
+.prod-meta{font-size:11px;color:#888;margin-top:1px}
+.qty-wrap{display:flex;align-items:center;gap:6px}
+.qty-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--borde);background:#f8f9fa;color:#222;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.qty-num{width:28px;text-align:center;font-size:14px;font-weight:700;color:var(--verde)}
+
+/* LISTA CLIENTES / PRODUCTOS SEARCH */
+.search-item{padding:10px 12px;border-bottom:1px solid #f5f5f5;cursor:pointer}
+.search-item:hover{background:#f8faf9}
+.search-item:last-child{border-bottom:none}
+.si-name{font-size:14px;font-weight:600;color:#222}
+.si-meta{font-size:11px;color:#888;margin-top:1px}
+
+/* BADGES */
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px}
+.badge-green{background:var(--verde-bg);color:var(--verde-text)}
+.badge-blue{background:var(--azul-bg);color:var(--azul)}
+.badge-scan{background:#E6F1FB;color:#185FA5;font-size:10px;padding:2px 7px;border-radius:5px;margin-left:5px}
+
+/* RESUMEN */
+.sum-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #f5f5f5}
+.sum-row:last-child{border-bottom:none}
+.sum-total{display:flex;justify-content:space-between;padding:10px 0 0;font-size:16px;font-weight:700}
+
+/* HGI STATUS */
+.hgi-banner{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--verde-bg);border-radius:10px;border:1px solid #c5e0b4;margin-bottom:10px}
+.hgi-icon{width:32px;height:32px;border-radius:50%;background:var(--verde);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* SUCCESS */
+.success-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;text-align:center}
+.success-circle{width:72px;height:72px;border-radius:50%;background:var(--verde-bg);display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+
+/* LOADING */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+.loading-overlay.show{display:flex}
+.loading-card{background:white;border-radius:16px;padding:28px 32px;text-align:center;min-width:220px}
+.spinner{width:36px;height:36px;border:3px solid #e0e7e5;border-top-color:var(--verde);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:white;padding:10px 20px;border-radius:10px;font-size:13px;z-index:1000;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* SCANNER VIDEO */
+#scanner-container{display:none;position:fixed;inset:0;background:black;z-index:998;flex-direction:column;align-items:center;justify-content:center}
+#scanner-container.show{display:flex}
+#scanner-container video,#scanner-container canvas{max-width:100%;max-height:70vh}
+.scanner-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:250px;height:120px;border:2px solid #1D9E75;border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.5)}
+.scanner-line{position:absolute;top:50%;left:0;right:0;height:2px;background:var(--verde-claro);animation:scan 2s linear infinite}
+@keyframes scan{0%{top:10%}100%{top:90%}}
+.btn-close-scan{position:absolute;bottom:40px;padding:12px 32px;background:white;color:#222;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer}
+
+/* LOGIN */
+.login-bg{background:var(--verde);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 24px;min-height:100vh}
+.login-logo{width:80px;height:80px;border-radius:20px;background:white;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.login-logo span{font-size:32px;font-weight:800;color:var(--verde)}
+
+/* VENDEDOR ITEM */
+.vend-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f5f5f5}
+.vend-row:last-child{border-bottom:none}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--azul-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--azul);flex-shrink:0}
+
+/* BOTTOM BAR */
+.bottom-bar{padding:12px 16px;background:white;border-top:1px solid var(--borde);position:sticky;bottom:0}
+
+/* METRIC CARDS */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.metric{background:white;border-radius:12px;border:1px solid var(--borde);padding:12px}
+.metric-label{font-size:11px;color:#888;margin-bottom:3px}
+.metric-value{font-size:24px;font-weight:700;color:var(--verde)}
+
+/* ESTADO CHIP */
+.chip{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600}
+.chip-green{background:var(--verde-bg);color:var(--verde-text)}
+.chip-blue{background:var(--azul-bg);color:var(--azul)}
+.chip-gray{background:#f0f4f3;color:#666}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <p id="loading-msg" style="font-size:14px;color:#444">Conectando con HGI...</p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- SCANNER -->
+<div id="scanner-container">
+  <div id="interactive" class="viewport"></div>
+  <div class="scanner-overlay"><div class="scanner-line"></div></div>
+  <button class="btn-close-scan" onclick="cerrarScanner()">Cancelar</button>
+</div>
+
+<!-- ==================== HEADER ==================== -->
+<div class="header" id="app-header">
+  <div class="logo">M</div>
+  <div class="header-text">
+    <h1>Milo</h1>
+    <p id="header-sub">Cargando...</p>
+  </div>
+</div>
+
+<!-- ==================== LOGIN ==================== -->
+<div id="s-login" class="screen active">
+  <div class="login-bg">
+    <div class="login-logo"><span>M</span></div>
+    <p style="color:white;font-size:24px;font-weight:700;margin-bottom:4px">Milo</p>
+    <p style="color:rgba(255,255,255,.75);font-size:13px;margin-bottom:32px">Plataforma de pedidos · LubriAndes</p>
+    <div style="width:100%;max-width:320px">
+      <div class="field"><input type="text" id="login-usuario" placeholder="Usuario HGI" value="98711025" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:white"/></div>
+      <div class="field"><input type="password" id="login-clave" placeholder="Contraseña" value="C9871" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:white"/></div>
+      <button onclick="hacerLogin()" style="width:100%;padding:14px;background:white;color:var(--verde);border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DASHBOARD ==================== -->
+<div id="s-dash" class="screen">
+  <div class="tabs">
+    <button class="tab active" onclick="dashTab(this,'dt-inicio')">Inicio</button>
+    <button class="tab" onclick="dashTab(this,'dt-asesores')">Asesores</button>
+    <button class="tab" onclick="dashTab(this,'dt-catalogo')">Catálogo</button>
+  </div>
+  <div class="body">
+    <!-- TAB INICIO -->
+    <div id="dt-inicio">
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Pedidos hoy</div><div class="metric-value" id="m-pedidos">0</div></div>
+        <div class="metric"><div class="metric-label">Total del día</div><div class="metric-value" id="m-total">$0</div></div>
+      </div>
+      <div class="card">
+        <p class="card-title">Últimos pedidos</p>
+        <div id="lista-pedidos-dash">
+          <p style="font-size:13px;color:#888;text-align:center;padding:10px">Sin pedidos hoy</p>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="irPaso1()">+ Nueva orden de pedido</button>
+    </div>
+    <!-- TAB ASESORES -->
+    <div id="dt-asesores" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="buscar-vendedor" placeholder="Buscar asesor..." oninput="filtrarVendedores()" style="flex:1"/>
+        <button class="btn-outline" onclick="cargarVendedores()">↻</button>
+      </div>
+      <div class="card" id="lista-vendedores">
+        <p style="font-size:13px;color:#888;text-align:center;padding:10px">Cargando asesores...</p>
+      </div>
+    </div>
+    <!-- TAB CATÁLOGO -->
+    <div id="dt-catalogo" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="buscar-producto-cat" placeholder="Buscar producto o código..." oninput="filtrarCatalogo()" style="flex:1"/>
+        <button class="btn-outline" onclick="cargarCatalogo()">↻</button>
+      </div>
+      <div class="card" id="lista-catalogo">
+        <p style="font-size:13px;color:#888;text-align:center;padding:10px">Cargando catálogo...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PASO 1: CLIENTE ==================== -->
+<div id="s-paso1" class="screen">
+  <div class="steps">
+    <div class="step-dot active" id="dot1-1"></div>
+    <div class="step-dot" id="dot1-2"></div>
+    <div class="step-dot" id="dot1-3"></div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <p class="card-title">Asesor responsable</p>
+      <div class="field"><label>Seleccionar asesor</label>
+        <select id="sel-asesor"></select>
+      </div>
+      <div class="field"><label>Zona / Transacción</label>
+        <select id="sel-transaccion">
+          <option value="098">098 - Oriente Antioqueño Cercano</option>
+          <option value="091">091 - Dosquebradas</option>
+          <option value="099">099 - Valle de Aburrá</option>
+        </select>
+      </div>
+    </div>
+    <div class="card">
+      <p class="card-title">Buscar cliente en HGI</p>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="text" id="buscar-nit" placeholder="NIT o nombre del cliente" style="flex:1"/>
+        <button class="btn-outline" onclick="buscarCliente()">Buscar</button>
+      </div>
+      <div id="resultados-clientes" style="display:none">
+        <div class="card" style="margin:0;padding:0;max-height:200px;overflow-y:auto" id="lista-clientes-search"></div>
+      </div>
+      <p style="font-size:11px;color:#aaa;text-align:center;margin-top:6px">— o ingresa los datos manualmente —</p>
+      <button class="btn-secondary" style="margin-top:6px" onclick="mostrarFormCliente()">✏️ Ingresar cliente manualmente</button>
+    </div>
+    <div class="card" id="card-cliente-sel">
+      <p class="card-title">Datos del cliente</p>
+      <div class="field"><label>Razón social *</label><input type="text" id="cli-nombre" placeholder="Nombre o razón social del cliente"/></div>
+      <div class="field"><label>NIT / Cédula *</label><input type="text" id="cli-nit" placeholder="Ej: 900123456-1"/></div>
+      <div class="field"><label>Dirección de entrega</label><input type="text" id="cli-direccion" placeholder="Dirección donde se entrega el pedido"/></div>
+      <div class="field"><label>Forma de pago</label>
+        <select id="cli-pago">
+          <option value="1">Contado</option>
+          <option value="2">Crédito 30 días</option>
+          <option value="3">Crédito 60 días</option>
+          <option value="4">Crédito 90 días</option>
+        </select>
+      </div>
+      <div class="field"><label>Fecha de entrega</label><input type="date" id="cli-fecha"/></div>
+    </div>
+    <div class="card">
+      <p class="card-title">Ubicación GPS</p>
+      <p style="font-size:12px;color:#666">Coordenadas capturadas automáticamente</p>
+      <div class="gps-badge" id="gps-badge"><div class="gps-dot"></div><span id="gps-text">Obteniendo ubicación...</span></div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" onclick="irPaso2()">Continuar → Productos</button>
+    <button class="btn-secondary" onclick="ir('s-dash')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ==================== PASO 2: PRODUCTOS ==================== -->
+<div id="s-paso2" class="screen">
+  <div class="steps">
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+    <div class="step-dot"></div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <p class="card-title">Agregar producto</p>
+      <div class="scan-box">
+        <div class="scan-icon-wrap">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2">
+            <rect x="3" y="3" width="4" height="4"/><rect x="17" y="3" width="4" height="4"/><rect x="3" y="17" width="4" height="4"/>
+            <line x1="9" y1="4" x2="15" y2="4"/><line x1="4" y1="9" x2="4" y2="15"/>
+            <line x1="20" y1="9" x2="20" y2="15"/><line x1="9" y1="20" x2="15" y2="20"/>
+            <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+          </svg>
+        </div>
+        <p style="font-size:12px;color:#666;text-align:center">Escanea el código de barras del producto</p>
+        <button class="btn-scan" onclick="abrirScanner()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Activar cámara
+        </button>
+      </div>
+      <p style="font-size:11px;color:#888;text-align:center;margin-bottom:8px">— o ingresar manualmente —</p>
+      <div class="manual-row">
+        <input type="text" id="input-ean" placeholder="Código de barras / código producto"/>
+        <button onclick="buscarPorEAN()">Buscar</button>
+      </div>
+      <div id="resultado-scan" style="display:none;margin-top:10px;padding:10px;border-radius:10px"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <p class="card-title" style="margin:0">Productos en el pedido</p>
+        <span id="badge-items" style="font-size:11px;color:#888">0 ítems</span>
+      </div>
+      <div id="lista-items">
+        <p style="font-size:13px;color:#888;text-align:center;padding:10px" id="msg-sin-items">Sin productos agregados</p>
+      </div>
+    </div>
+    <div class="card">
+      <p class="card-title">Condiciones comerciales</p>
+      <div class="field"><label>% Descuento global</label><input type="text" id="descuento-global" placeholder="0" value="0"/></div>
+      <div class="field"><label>Observaciones</label><textarea id="observaciones" placeholder="Indicaciones especiales para el pedido..."></textarea></div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" onclick="irPaso3()">Continuar → Resumen</button>
+  </div>
+</div>
+
+<!-- ==================== PASO 3: RESUMEN ==================== -->
+<div id="s-paso3" class="screen">
+  <div class="steps">
+    <div class="step-dot done"></div>
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+  </div>
+  <div class="body">
+    <div class="hgi-banner">
+      <div class="hgi-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--verde-text)">Conectado a HGI ERP</div>
+        <div style="font-size:11px;color:#639922">Listo para registrar el pedido automáticamente</div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="card-title">Resumen del pedido</p>
+      <div id="resumen-datos"></div>
+    </div>
+    <div class="card">
+      <p class="card-title">Productos</p>
+      <div id="resumen-productos"></div>
+      <div class="sum-total"><span>Total</span><span style="color:var(--verde)" id="resumen-total">$0</span></div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" onclick="enviarPedido()">Enviar pedido a HGI →</button>
+    <button class="btn-secondary" onclick="ir('s-paso2')">← Editar productos</button>
+  </div>
+</div>
+
+<!-- ==================== ÉXITO ==================== -->
+<div id="s-exito" class="screen">
+  <div class="success-wrap">
+    <div class="success-circle">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <p style="font-size:22px;font-weight:700;color:#222;margin-bottom:8px">¡Pedido registrado!</p>
+    <p style="font-size:14px;color:#666;margin-bottom:22px">Creado automáticamente en HGI ERP</p>
+    <div style="background:#f8faf9;border-radius:14px;border:1px solid var(--borde);padding:16px;width:100%;max-width:320px;margin-bottom:20px">
+      <div class="sum-row"><span>Nro. pedido HGI</span><span style="font-weight:700;color:var(--verde)" id="exito-nro">#PED-...</span></div>
+      <div class="sum-row"><span>Cliente</span><span style="font-weight:600" id="exito-cliente"></span></div>
+      <div class="sum-row"><span>Asesor</span><span style="font-weight:600" id="exito-asesor"></span></div>
+      <div class="sum-row"><span>Total</span><span style="font-weight:700" id="exito-total"></span></div>
+      <div class="sum-row" style="border:none"><span>GPS</span><span style="font-size:11px;color:#888" id="exito-gps"></span></div>
+    </div>
+    <button class="btn-primary" style="max-width:280px" onclick="nuevoPedido()">+ Nuevo pedido</button>
+    <button class="btn-secondary" style="max-width:280px" onclick="ir('s-dash')">Volver al inicio</button>
+  </div>
+</div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+// ============================================================
+// CONFIG HGI
+// ============================================================
+const HGI = {
+  baseUrl: "https://countdown-gothic-unfounded.ngrok-free.dev/api",
+  usuario: "98711025",
+  clave: "C9871",
+  cod_compania: "1",
+  cod_empresa: "1",
+  codigo_empresa: "1",
+  transaccion: "098"
+};
+
+const TRANSACCIONES = [
+  { codigo: "098", nombre: "098 - Oriente Antioqueño Cercano" },
+  { codigo: "091", nombre: "091 - Dosquebradas" },
+  { codigo: "099", nombre: "099 - Valle de Aburrá" }
+];
+
+let TOKEN = null;
+let gpsData = { lat: null, lng: null, texto: "Sin GPS" };
+let clienteSeleccionado = null;
+let productosEnPedido = [];
+let vendedoresList = [];
+let catalogoList = [];
+let pedidosHoy = [];
+let asorSeleccionado = null;
+
+// ============================================================
+// UTILS
+// ============================================================
+function mostrarLoading(msg = "Conectando con HGI...") {
+  document.getElementById("loading-msg").textContent = msg;
+  document.getElementById("loading").classList.add("show");
+}
+function ocultarLoading() { document.getElementById("loading").classList.remove("show"); }
+
+function toast(msg, dur = 3000) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), dur);
+}
+
+function formatCOP(n) {
+  return "$" + Math.round(n).toLocaleString("es-CO");
+}
+
+function ir(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  const subs = {
+    "s-login": "Iniciar sesión",
+    "s-dash": "Bienvenido",
+    "s-paso1": "Nuevo pedido · Paso 1 de 3",
+    "s-paso2": "Nuevo pedido · Paso 2 de 3",
+    "s-paso3": "Nuevo pedido · Paso 3 de 3",
+    "s-exito": "Pedido confirmado"
+  };
+  document.getElementById("header-sub").textContent = subs[id] || "";
+  window.scrollTo(0, 0);
+}
+
+// ============================================================
+// GPS
+// ============================================================
+function obtenerGPS() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    gpsData = {
+      lat: pos.coords.latitude.toFixed(6),
+      lng: pos.coords.longitude.toFixed(6),
+      texto: `${pos.coords.latitude.toFixed(4)}°N, ${pos.coords.longitude.toFixed(4)}°W`
+    };
+    const el = document.getElementById("gps-text");
+    if (el) el.textContent = gpsData.texto;
+  }, () => {
+    gpsData = { lat: null, lng: null, texto: "GPS no disponible" };
+  });
+}
+
+// ============================================================
+// AUTENTICACIÓN HGI
+// ============================================================
+async function autenticar() {
+  if (TOKEN) return TOKEN;
+  try {
+    const url = `${HGI.baseUrl}/Autenticar?usuario=${HGI.usuario}&clave=${HGI.clave}&cod_compania=${HGI.cod_compania}&cod_empresa=${HGI.cod_empresa}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.JwtToken) { TOKEN = data.JwtToken; return TOKEN; }
+    if (data.Error?.Codigo === 3) { TOKEN = "VIGENTE"; return TOKEN; }
+    TOKEN = "MODO_LOCAL"; return TOKEN;
+  } catch(e) {
+    // CORS bloqueado - modo local activo
+    TOKEN = "MODO_LOCAL"; return TOKEN;
+  }
+}
+
+async function hgiFetch(endpoint, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    "ngrok-skip-browser-warning": "true",
+    "User-Agent": "MiloApp/1.0"
+  };
+  // Agregar parametro ngrok para saltar advertencia
+  const sep = endpoint.includes("?") ? "&" : "?";
+  const url = `${HGI.baseUrl}${endpoint}${sep}ngrok-skip-browser-warning=true`;
+  const res = await fetch(url, { ...options, headers });
+  if (!res.ok) throw new Error(`HGI ${res.status}: ${endpoint}`);
+  return res.json();
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+async function hacerLogin() {
+  mostrarLoading("Conectando con HGI...");
+  try {
+    const r = await fetch(`https://countdown-gothic-unfounded.ngrok-free.dev/`, {headers:{"ngrok-skip-browser-warning":"true"}});
+    const data = await r.json();
+    if (!data.token) {
+      ocultarLoading();
+      toast("Proxy sin token - reinicia app.py");
+      return;
+    }
+    ocultarLoading();
+    ir("s-dash");
+    obtenerGPS();
+    cargarVendedores();
+    cargarCatalogo();
+    toast("✓ Conectado a HGI ERP");
+  } catch(e) {
+    ocultarLoading();
+    toast("No se puede conectar al proxy - verifica WiFi");
+  }
+}
+
+// ============================================================
+// DASHBOARD TABS
+// ============================================================
+function dashTab(btn, tabId) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  ["dt-inicio", "dt-asesores", "dt-catalogo"].forEach(id => {
+    document.getElementById(id).style.display = id === tabId ? "block" : "none";
+  });
+}
+
+// ============================================================
+// CARGAR VENDEDORES / ASESORES
+// ============================================================
+async function cargarVendedores() {
+  try {
+    mostrarLoading("Cargando asesores desde HGI...");
+    const data = await hgiFetch(`/Vendedores/Obtener?codigo_vendedor=*`);
+    ocultarLoading();
+    vendedoresList = Array.isArray(data) ? data : [];
+    // Filtrar activos y excluir entradas no relevantes
+    const excluir = ["GENERAL","ABOGADO","CLIENTES NO VISITADOS","JEFE DE MOSTRADORES","VACANTE RIONEGRO S"];
+    const activos = vendedoresList.filter(v => v.Estado === 1 && v.Nombre && !excluir.includes(v.Nombre));
+    vendedoresList = activos.length ? activos : vendedoresList;
+    renderVendedores(vendedoresList);
+    poblarSelectAsesores(vendedoresList);
+    toast("✓ " + vendedoresList.length + " asesores cargados");
+  } catch (e) {
+    ocultarLoading();
+    console.error("Error vendedores:", e);
+    toast("Error cargando asesores: " + e.message);
+  }
+}
+
+function renderVendedores(lista) {
+  const el = document.getElementById("lista-vendedores");
+  if (!lista.length) { el.innerHTML = '<p style="font-size:13px;color:#888;text-align:center;padding:10px">Sin asesores</p>'; return; }
+  el.innerHTML = lista.slice(0, 30).map(v => {
+    const nombre = v.Nombre || v.nombre || v.razon_social || "Sin nombre";
+    const cod = v.Codigo || v.codigo || "";
+    const ini = nombre.substring(0, 2).toUpperCase();
+    const activo = v.Estado === 1 || v.estado === 1;
+    return `<div class="vend-row">
+      <div class="avatar">${ini}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">${nombre}</div><div style="font-size:11px;color:#888">Cód: ${cod}</div></div>
+      <span class="chip ${activo ? 'chip-green' : 'chip-gray'}">${activo ? 'Activo' : 'Inactivo'}</span>
+    </div>`;
+  }).join("");
+}
+
+function filtrarVendedores() {
+  const q = document.getElementById("buscar-vendedor").value.toLowerCase();
+  const f = vendedoresList.filter(v => (v.nombre || v.razon_social || "").toLowerCase().includes(q) || (v.codigo || "").toLowerCase().includes(q));
+  renderVendedores(f);
+}
+
+function poblarSelectAsesores(lista) {
+  const sel = document.getElementById("sel-asesor");
+  if (!lista.length) {
+    sel.innerHTML = '<option value="">Sin asesores disponibles</option>';
+    return;
+  }
+  sel.innerHTML = lista.map(v => {
+    // Campos reales de HGI Vendedores
+    const nombre = v.Nombre || v.nombre || v.razon_social || "Asesor";
+    const cod = v.Codigo || v.codigo || "";
+    return `<option value="${cod}">${nombre}</option>`;
+  }).join("");
+}
+
+// ============================================================
+// CARGAR CATÁLOGO
+// ============================================================
+async function cargarCatalogo() {
+  // Endpoint real HGI inventario - carga inicial vacía, búsqueda por código
+  catalogoList = [];
+  renderCatalogo([]);
+  // Mostrar instrucción al usuario
+  const el = document.getElementById("lista-catalogo");
+  if(el) el.innerHTML = '<p style="font-size:13px;color:#888;text-align:center;padding:14px">Escribe el código o nombre del producto para buscarlo</p>';
+}
+
+async function buscarProductoEnHGI(termino) {
+  mostrarLoading("Buscando en catálogo HGI...");
+  try {
+    let endpoint;
+    const tieneEspacios = termino.includes(" ");
+    const esNumeroLargo = /^\d{8,}$/.test(termino); // EAN/código de barras numérico largo
+    
+    if (tieneEspacios) {
+      // Búsqueda por descripción
+      endpoint = `/Productos/ObtenerProductos?codigo_producto=*&descripcion=${encodeURIComponent(termino)}&movil=1&ecommerce=1&estado=1&kardex=1&incluir_foto=false&ruta_ws=null`;
+    } else if (esNumeroLargo) {
+      // Búsqueda por EAN/código de barras
+      endpoint = `/Productos/ObtenerProductos?codigo_producto=*&codigo_ean=${encodeURIComponent(termino)}&movil=1&ecommerce=1&estado=1&kardex=1&incluir_foto=false&ruta_ws=null`;
+    } else {
+      // Búsqueda por código de producto (con comodín para búsqueda parcial)
+      endpoint = `/Productos/ObtenerProductos?codigo_producto=${encodeURIComponent(termino)}&movil=1&ecommerce=1&estado=1&kardex=1&incluir_foto=false&ruta_ws=null`;
+    }
+    const data = await hgiFetch(endpoint);
+    ocultarLoading();
+    return Array.isArray(data) ? data : (data.Lista || data.lista || []);
+  } catch(e) {
+    ocultarLoading();
+    return [];
+  }
+}
+
+async function buscarProductoHGI(termino) {
+  // Búsqueda en tiempo real para catálogos grandes
+  if (catalogoList.length > 0) {
+    // Filtrar localmente si ya está cargado
+    return catalogoList.filter(p =>
+      (p.descripcion||"").toLowerCase().includes(termino.toLowerCase()) ||
+      (p.codigo_producto||"").toLowerCase().includes(termino.toLowerCase()) ||
+      (p.ean||"").includes(termino)
+    );
+  }
+  // Si no está cargado, buscar en HGI
+  try {
+    const data = await hgiFetch(`/Inventario/Obtener?codigo_producto=${termino}&movil=*&eccomerce=*&codigo_bodega=*&codigo_lote=*&codigo_talla=*&codigo_color=*&sku=*&ean=*`);
+    return Array.isArray(data) ? data : (data.Lista || data.lista || []);
+  } catch(e) { return []; }
+}
+
+function renderCatalogo(lista) {
+  const el = document.getElementById("lista-catalogo");
+  if (!lista.length) { el.innerHTML = '<p style="font-size:13px;color:#888;text-align:center;padding:10px">Sin productos</p>'; return; }
+  el.innerHTML = lista.slice(0, 80).map(p => {
+    // Campos reales HGI Productos/ObtenerProductos
+    const nombre = p.Descripcion || p.descripcion || p.Nombre || p.nombre || "Producto";
+    const cod = p.Codigo || p.CodigoProducto || p.codigo_producto || "";
+    const ean = p.CodigoEAN || p.ean || p.codigo_barras || "";
+    const precio = p.Precio1 || p.PrecioVenta || p.precio_venta || p.Precio || 0;
+    const iva = p.ValorIva ? " · IVA " + (p.ValorIva * 100).toFixed(0) + "%" : "";
+    const precios = [
+      p.Precio1, p.Precio2, p.Precio3, p.Precio4,
+      p.Precio5, p.Precio6, p.Precio7, p.Precio8
+    ].filter(v => v && v > 0);
+    const pJson = JSON.stringify(p).replace(/"/g, "&quot;");
+    return `<div class="search-item" onclick="mostrarSelectorPrecio(${pJson})">
+      <div class="si-name">${nombre}</div>
+      <div class="si-meta">${cod}${ean ? ' · EAN: ' + ean : ''} · Desde ${formatCOP(precio)}${iva} · ${precios.length} precios</div>
+    </div>`;
+  }).join("");
+}
+
+function mostrarSelectorPrecio(prod) {
+  const nombre = prod.Descripcion || prod.Nombre || "Producto";
+  const iva = prod.ValorIva || 0;
+  const precios = [
+    { lista: 1, valor: prod.Precio1 },
+    { lista: 2, valor: prod.Precio2 },
+    { lista: 3, valor: prod.Precio3 },
+    { lista: 4, valor: prod.Precio4 },
+    { lista: 5, valor: prod.Precio5 },
+    { lista: 6, valor: prod.Precio6 },
+    { lista: 7, valor: prod.Precio7 },
+    { lista: 8, valor: prod.Precio8 },
+  ].filter(p => p.valor && p.valor > 0);
+
+  const botones = precios.map(p => `
+    <button onclick="seleccionarPrecio(${JSON.stringify(prod).replace(/"/g, "&quot;")}, ${p.valor})" style="
+      display:block; width:100%; padding:12px 16px; margin-bottom:8px;
+      background:#f8faf9; border:1.5px solid #e0e0e0; border-radius:10px;
+      text-align:left; cursor:pointer; font-size:14px; color:#222;">
+      <span style="font-weight:700;color:var(--verde)">Lista ${p.lista}</span>
+      <span style="float:right;font-weight:700;font-size:15px">${formatCOP(p.valor)}</span>
+      ${iva > 0 ? '<span style="display:block;font-size:11px;color:#888">IVA incluido · Neto: ' + formatCOP(Math.round(p.valor / (1 + iva))) + '</span>' : ''}
+    </button>
+  `).join("");
+
+  const modal = document.createElement("div");
+  modal.id = "modal-precio";
+  modal.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-end;";
+  modal.innerHTML = `
+    <div style="background:#fff;width:100%;max-height:80vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:20px;">
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px;color:#222">${nombre}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:16px">Selecciona el precio de la negociación:</div>
+      ${botones}
+      <button onclick="document.getElementById('modal-precio').remove()" style="
+        width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:10px;
+        font-size:14px;color:#888;cursor:pointer;margin-top:4px;">Cancelar</button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", e => { if(e.target === modal) modal.remove(); });
+}
+
+function seleccionarPrecio(prod, precioSeleccionado) {
+  const modal = document.getElementById("modal-precio");
+  if (modal) modal.remove();
+  // Sobreescribir Precio1 con el precio seleccionado
+  prod.Precio1 = precioSeleccionado;
+  agregarProductoDesde(prod);
+}
+
+async function filtrarCatalogo() {
+  const q = document.getElementById("buscar-producto-cat").value.trim();
+  if (q.length < 2) { return; }
+  const resultados = await buscarProductoEnHGI(q);
+  if (resultados.length) {
+    catalogoList = resultados;
+    renderCatalogo(resultados.slice(0, 80));
+  } else {
+    const el = document.getElementById("lista-catalogo");
+    if(el) el.innerHTML = '<p style="font-size:13px;color:#888;text-align:center;padding:14px">Sin resultados para: ' + q + '</p>';
+  }
+}
+
+// ============================================================
+// PASO 1 - CLIENTE
+// ============================================================
+function irPaso1() {
+  productosEnPedido = [];
+  clienteSeleccionado = null;
+  document.getElementById("resultados-clientes").style.display = "none";
+  document.getElementById("buscar-nit").value = "";
+  document.getElementById("cli-nombre").value = "";
+  document.getElementById("cli-nit").value = "";
+  document.getElementById("cli-direccion").value = "";
+  const d = new Date(); d.setDate(d.getDate() + 2);
+  document.getElementById("cli-fecha").value = d.toISOString().split("T")[0];
+  obtenerGPS();
+  ir("s-paso1");
+}
+
+function mostrarFormCliente() {
+  clienteSeleccionado = { manual: true };
+  document.getElementById("cli-nombre").focus();
+}
+
+async function buscarCliente() {
+  const query = document.getElementById("buscar-nit").value.trim();
+  if (!query) { toast("Ingresa un NIT o nombre"); return; }
+  mostrarLoading("Buscando cliente en HGI...");
+  try {
+    const esNit = /^\d+$/.test(query);
+    const nit = esNit ? query : "0";
+    const endpoint = `/Terceros/ObtenerLista?numero_identificacion=${nit}&codigo_auxiliar=*&codigo_estado=*&tipo_tercero=*&codigo_ciudad=*&codigo_vendedor=*`;
+    const data = await hgiFetch(endpoint);
+    let lista = Array.isArray(data) ? data : (data.Lista || data.lista || []);
+    // Filtrar por nombre si no es NIT
+    if (!esNit) {
+      lista = lista.filter(c =>
+        (c.Nombre || c.nombre || "").toLowerCase().includes(query.toLowerCase())
+      );
+    }
+    ocultarLoading();
+    if (!lista.length) { toast("No se encontraron clientes"); return; }
+    document.getElementById("resultados-clientes").style.display = "block";
+    document.getElementById("lista-clientes-search").innerHTML = lista.slice(0, 15).map(c => {
+      // Campos reales HGI: NumeroIdentificacion, Nombre, Vendedor
+      const nombre = c.Nombre || c.nombre || c.razon_social || "Sin nombre";
+      const nit = c.NumeroIdentificacion || c.numero_identificacion || c.nit || "";
+      return `<div class="search-item" onclick='seleccionarCliente(${JSON.stringify(c).replace(/'/g,"\'")} )'>
+        <div class="si-name">${nombre}</div>
+        <div class="si-meta">NIT: ${nit}</div>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    ocultarLoading();
+    toast("Error buscando cliente: " + e.message);
+  }
+}
+
+function seleccionarCliente(c) {
+  clienteSeleccionado = c;
+  // Campos reales HGI: NumeroIdentificacion, Nombre
+  const nombre = c.Nombre || c.nombre || c.razon_social || "";
+  const nit = c.NumeroIdentificacion || c.numero_identificacion || c.nit || "";
+  const dir = c.Direccion || c.direccion || "";
+  document.getElementById("cli-nombre").value = nombre;
+  document.getElementById("cli-nit").value = nit;
+  document.getElementById("cli-direccion").value = dir;
+  document.getElementById("card-cliente-sel").style.display = "block";
+  document.getElementById("resultados-clientes").style.display = "none";
+  toast("✓ " + nombre + " seleccionado");
+}
+
+function irPaso2() {
+  const nombre = document.getElementById("cli-nombre").value.trim();
+  const nit = document.getElementById("cli-nit").value.trim();
+  if (!nombre || !nit) { toast("Completa el nombre y NIT del cliente"); mostrarFormCliente(); return; }
+  if (!clienteSeleccionado) clienteSeleccionado = { manual: true };
+  clienteSeleccionado.nombre = nombre;
+  clienteSeleccionado.nit = nit;
+  renderItemsPedido();
+  ir("s-paso2");
+}
+
+// ============================================================
+// PASO 2 - PRODUCTOS Y ESCÁNER
+// ============================================================
+function abrirScanner() {
+  const container = document.getElementById("scanner-container");
+  container.classList.add("show");
+  Quagga.init({
+    inputStream: { type: "LiveStream", target: document.getElementById("interactive"), constraints: { facingMode: "environment" } },
+    decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader"] }
+  }, err => {
+    if (err) { cerrarScanner(); toast("No se pudo acceder a la cámara"); return; }
+    Quagga.start();
+  });
+  Quagga.onDetected(result => {
+    const code = result.codeResult.code;
+    cerrarScanner();
+    document.getElementById("input-ean").value = code;
+    buscarPorEAN(code);
+  });
+}
+
+function cerrarScanner() {
+  document.getElementById("scanner-container").classList.remove("show");
+  try { Quagga.stop(); } catch (e) {}
+}
+
+async function buscarPorEAN(eanParam) {
+  const ean = eanParam || document.getElementById("input-ean").value.trim();
+  if (!ean) { toast("Ingresa un código o descripción"); return; }
+  mostrarLoading("Buscando producto...");
+  const res = document.getElementById("resultado-scan");
+
+  try {
+    // Detectar tipo de búsqueda
+    const tieneEspacios = ean.includes(" ");
+    const esEanLargo = /^\d{8,}$/.test(ean);
+
+    let endpoint;
+    if (tieneEspacios) {
+      // Búsqueda por descripción
+      endpoint = `/Productos/ObtenerProductos?codigo_producto=*&descripcion=${encodeURIComponent(ean)}&movil=1&ecommerce=1&estado=1&kardex=1&incluir_foto=false&ruta_ws=null`;
+    } else if (esEanLargo) {
+      // Búsqueda por EAN/código de barras
+      endpoint = `/Productos/ObtenerProductos?codigo_producto=*&codigo_ean=${encodeURIComponent(ean)}&movil=1&ecommerce=1&estado=1&kardex=1&incluir_foto=false&ruta_ws=null`;
+    } else {
+      // Búsqueda por código de producto
+      endpoint = `/Productos/ObtenerProductos?codigo_producto=${encodeURIComponent(ean)}&movil=1&ecommerce=1&estado=1&kardex=1&incluir_foto=false&ruta_ws=null`;
+    }
+
+    const data = await hgiFetch(endpoint);
+    const lista = Array.isArray(data) ? data : (data.Lista || data.lista || []);
+    ocultarLoading();
+
+    if (!lista.length) {
+      res.style.cssText = "display:block;padding:10px;border-radius:10px;background:#FFF3F3;border:1px solid #ffcdd2;margin-top:10px";
+      res.innerHTML = `<div style="font-size:13px;color:#c62828">✗ Producto no encontrado — intenta con otro término</div>`;
+      return;
+    }
+
+    // Si hay múltiples resultados mostrar lista para elegir
+    if (lista.length > 1) {
+      res.style.cssText = "display:block;margin-top:10px;max-height:300px;overflow-y:auto;border-radius:10px;border:1px solid #e0e0e0;background:#fff";
+      res.innerHTML = `<div style="padding:8px 12px;font-size:12px;color:#888;border-bottom:1px solid #f0f0f0">${lista.length} productos encontrados — toca para seleccionar precio</div>` +
+        lista.slice(0, 15).map(p => {
+          const nom = p.Descripcion || p.Nombre || "";
+          const pr = p.Precio1 || 0;
+          const pJson = JSON.stringify(p).replace(/"/g, "&quot;");
+          return `<div onclick="mostrarSelectorPrecio(${pJson})" style="padding:10px 12px;border-bottom:1px solid #f5f5f5;cursor:pointer;">
+            <div style="font-size:13px;font-weight:600;color:#222">${nom}</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">Cód: ${p.Codigo} · Desde ${formatCOP(pr)}</div>
+          </div>`;
+        }).join("");
+      return;
+    }
+
+    // Un solo resultado — mostrar con selector de precio
+    const prod = lista[0];
+    const nombre = prod.Descripcion || prod.descripcion || prod.Nombre || "Producto";
+    const precio = prod.Precio1 || 0;
+    const precios = [prod.Precio1,prod.Precio2,prod.Precio3,prod.Precio4,prod.Precio5,prod.Precio6,prod.Precio7,prod.Precio8].filter(v=>v&&v>0);
+    res.style.cssText = "display:block;padding:10px;border-radius:10px;background:#EAF3DE;border:1px solid #c5e0b4;margin-top:10px";
+    res.innerHTML = `<div style="font-size:13px;font-weight:700;color:#3B6D11">✓ ${nombre}</div>
+      <div style="font-size:11px;color:#639922;margin-top:2px">Cód: ${prod.Codigo} · Desde ${formatCOP(precio)} · ${precios.length} precios disponibles</div>
+      <button onclick="mostrarSelectorPrecio(${JSON.stringify(prod).replace(/"/g,'&quot;')})" style="margin-top:8px;padding:7px 16px;background:var(--verde);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Seleccionar precio y agregar</button>`;
+
+  } catch(e) {
+    ocultarLoading();
+    res.style.cssText = "display:block;padding:10px;border-radius:10px;background:#FFF3F3;border:1px solid #ffcdd2;margin-top:10px";
+    res.innerHTML = `<div style="font-size:13px;color:#c62828">✗ Error buscando producto</div>`;
+  }
+}
+
+
+function agregarProductoDesde(prod, escaneado = false) {
+  const nombre = prod.Descripcion || prod.descripcion || prod.Nombre || prod.nombre || "Producto";
+  const codigo = prod.Codigo || prod.CodigoProducto || prod.codigo_producto || prod.codigo || "";
+  const ean = prod.CodigoEAN || prod.ean || prod.CodigoBarras || prod.codigo_barras || "";
+  const precio = prod.Precio1 || prod.PrecioVenta || prod.precio_venta || prod.Precio || prod.precio || 0;
+  const iva = prod.ValorIva || 0;
+  const precioSinIva = iva > 0 ? Math.round(precio / (1 + iva)) : precio;
+  const existe = productosEnPedido.find(p => p.codigo === codigo);
+  if (existe) { existe.cantidad++; } else {
+    productosEnPedido.push({ codigo, nombre, ean, precio, precioSinIva, iva, cantidad: 1, escaneado, bodega: "001", unidad: prod.CodigoUnidad || "Und" });
+  }
+  renderItemsPedido();
+  toast("✓ " + nombre + " agregado");
+  document.getElementById("resultado-scan").style.display = "none";
+  document.getElementById("input-ean").value = "";
+}
+
+function renderItemsPedido() {
+  const lista = document.getElementById("lista-items");
+  const badge = document.getElementById("badge-items");
+  const total = productosEnPedido.reduce((s, p) => s + p.precio * p.cantidad, 0);
+  if (badge) badge.textContent = productosEnPedido.length + " ítems · " + formatCOP(total);
+  if (!lista) return;
+  if (!productosEnPedido.length) {
+    lista.innerHTML = '<p style="font-size:13px;color:#888;text-align:center;padding:10px" id="msg-sin-prod">Sin productos agregados</p>';
+    return;
+  }
+  lista.innerHTML = productosEnPedido.map((p, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:#222">${p.nombre}</div>
+        <div style="font-size:11px;color:#888">${p.codigo} · ${formatCOP(p.precio)} c/u</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="cambiarCantidad(${i},-1)" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">−</button>
+        <span style="font-size:14px;font-weight:700;min-width:20px;text-align:center">${p.cantidad}</span>
+        <button onclick="cambiarCantidad(${i},1)" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">+</button>
+        <button onclick="quitarProducto(${i})" style="width:26px;height:26px;border-radius:50%;border:none;background:#ffebee;color:#c62828;cursor:pointer;font-size:14px">✕</button>
+      </div>
+    </div>`).join("");
+}
+
+function cambiarCantidad(i, delta) {
+  productosEnPedido[i].cantidad += delta;
+  if (productosEnPedido[i].cantidad <= 0) productosEnPedido.splice(i, 1);
+  renderItemsPedido();
+}
+
+function quitarProducto(i) {
+  productosEnPedido.splice(i, 1);
+  renderItemsPedido();
+}
+
+function irPaso3() {
+  if (!productosEnPedido.length) { toast("Agrega al menos un producto"); return; }
+  const descuento = parseFloat(document.getElementById("descuento-global").value) || 0;
+  const subtotal = productosEnPedido.reduce((s, p) => s + p.precio * p.cantidad, 0);
+  const totalFinal = subtotal * (1 - descuento / 100);
+  const asesorSelEl = document.getElementById("sel-asesor");
+  const asesorTxt = asesorSelEl.options[asesorSelEl.selectedIndex]?.text || "";
+  const pagoSel = document.getElementById("cli-pago");
+  const pagoTxt = pagoSel.options[pagoSel.selectedIndex]?.text || "";
+  document.getElementById("resumen-datos").innerHTML = `
+    <div class="sum-row"><span>Cliente</span><span style="font-weight:600">${clienteSeleccionado?.nombre || ""}</span></div>
+    <div class="sum-row"><span>NIT</span><span>${clienteSeleccionado?.nit || ""}</span></div>
+    <div class="sum-row"><span>Asesor</span><span style="font-weight:600">${asesorTxt}</span></div>
+    <div class="sum-row"><span>Forma de pago</span><span>${pagoTxt}</span></div>
+    <div class="sum-row"><span>Productos</span><span>${productosEnPedido.length}</span></div>
+    <div class="sum-row"><span>Subtotal</span><span>${formatCOP(subtotal)}</span></div>
+    <div class="sum-row"><span>Descuento</span><span>${descuento}%</span></div>
+    <div class="sum-row" style="font-weight:700;font-size:15px"><span>Total</span><span style="color:var(--verde)">${formatCOP(totalFinal)}</span></div>`;
+  document.getElementById("resumen-productos").innerHTML = productosEnPedido.map(p =>
+    `<div class="sum-row"><span>${p.nombre} x${p.cantidad}</span><span>${formatCOP(p.precio * p.cantidad)}</span></div>`
+  ).join("");
+  ir("s-paso3");
+}
+
+async function enviarPedido() {
+  mostrarLoading("Creando pedido en HGI ERP...");
+  try {
+    const fechaHoy = new Date().toISOString().split("T")[0] + "T00:00:00";
+    const fechaVence = document.getElementById("cli-fecha").value + "T00:00:00";
+    const descuento = parseFloat(document.getElementById("descuento-global").value) || 0;
+    const subtotal = productosEnPedido.reduce((s, p) => s + p.precio * p.cantidad, 0);
+    const totalFinal = subtotal * (1 - descuento / 100);
+    const transaccionSel = document.getElementById("sel-transaccion").value;
+    const asesorSel = document.getElementById("sel-asesor").value;
+    const nitCliente = document.getElementById("cli-nit").value;
+
+    const documento = {
+      Empresa: 1,
+      Transaccion: transaccionSel,
+      Numero: 0,
+      Ano: new Date().getFullYear(),
+      Periodo: new Date().getMonth() + 1,
+      Fecha: fechaHoy,
+      Vencimiento: fechaVence,
+      Tercero: nitCliente,
+      Vinculado: "0",
+      TerceroAuxiliar: "0",
+      Vendedor: asesorSel,
+      Transportador: "0",
+      BodegaDestino: transaccionSel === "098" ? "06" : transaccionSel === "091" ? "05" : "00",
+      Bodega: transaccionSel === "098" ? "06" : transaccionSel === "091" ? "05" : "00",
+      Clase: "0",
+      Moneda: "0",
+      Sucursal: "0",
+      CentroCosto: "0",
+      SubcentroCosto: "0",
+      ProductoP: "0",
+      CantidadP: 0,
+      BaseP: 0,
+      TipoEvento: "0",
+      TransaccionAuxiliar: "0",
+      DocumentoReferencia: "0",
+      Local: "0",
+      Referencia: "0",
+      Referencia1: "0",
+      Referencia2: "0",
+      Referencia3: "0",
+      Plazo: "30",
+      TipoDocumento: 0,
+      Valor: subtotal,
+      Subtotal: subtotal,
+      DescuentoTotalDocumento: subtotal * descuento / 100,
+      Iva: 0,
+      Total: totalFinal,
+      Neto: totalFinal,
+      Observaciones: document.getElementById("observaciones").value || "",
+      Estado: 0,
+      Cartera: 1,
+      Cuotas: 1,
+      AnyoCartera: new Date().getFullYear(),
+      EnviarDIAN: false,
+      IdSeguridad: "00000000-0000-0000-0000-000000000000",
+      UsuarioGraba: "CGOMEZ",
+      ClaveUsuario: "MILO1122",
+      CodigoCompania: "113",
+      TrazasGPS: gpsData.lat ? gpsData.lat + "," + gpsData.lng : null,
+      DocumentoDetalle: productosEnPedido.map(p => ({
+        Empresa: 1,
+        Transaccion: transaccionSel,
+        Documento: 0,
+        Producto: p.codigo,
+        Cantidad: p.cantidad,
+        CantidadDocumento: p.cantidad,
+        ValorUnitario: p.precioSinIva || p.precio,
+        ValorTotal: (p.precioSinIva || p.precio) * p.cantidad,
+        PorcentajeDescuento: descuento / 100,
+        ValorDescuento: p.precio * p.cantidad * descuento / 100,
+        ValorIva: 0,
+        ValorBaseImpuesto: p.precio * p.cantidad,
+        Bodega: transaccionSel === "098" ? "06" : transaccionSel === "091" ? "05" : "00",
+        CentroCosto: "0",
+        SubcentroCosto: "0",
+        Sucursal: "0",
+        Lote: "0",
+        Talla: "0",
+        Color: "0",
+        Serie: "0",
+        Serie1: "0",
+        Serie2: "0",
+        Serie3: "0",
+        Vendedor: asesorSel,
+        Tipo: 0,
+        Vinculado: "0",
+        Tercero: nitCliente,
+        Factor: 1,
+        Unidad: p.unidad || "Und",
+        CodigoUbicacion: "0",
+        RegistroTransporte: false,
+        ProductoGratis: false,
+        Fecha1: fechaHoy,
+        Fecha2: fechaHoy,
+        ActivoFijo: "0",
+        Descripcion1: "0",
+        DocumentoRerenciaD: 0,
+        CostoAgregado: 0,
+        ReteFte: 0,
+        SaldoInicial: 0,
+        SaldoFinal: 0
+      }))
+    };
+
+    const res = await fetch(`${HGI.baseUrl}/Documentos/Crear`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
+      body: JSON.stringify([documento])
+    });
+
+    const respData = await res.json();
+    ocultarLoading();
+
+    if (respData.Error && respData.Error.Codigo !== 0) {
+      toast("Error HGI: " + respData.Error.Mensaje);
+      return;
+    }
+
+    const respArray = Array.isArray(respData) ? respData[0] : respData;
+    if (respArray.Error && respArray.Error.Codigo !== 0) {
+      toast("Error HGI: " + respArray.Error.Mensaje);
+      ocultarLoading();
+      return;
+    }
+    const nroPedido = respArray.Numero || respArray.numero || ("#" + Date.now().toString().slice(-6));
+    const asesorSelEx = document.getElementById("sel-asesor");
+
+    document.getElementById("exito-nro").textContent = "#" + nroPedido;
+    document.getElementById("exito-cliente").textContent = document.getElementById("cli-nombre").value;
+    document.getElementById("exito-asesor").textContent = asesorSelEx.options[asesorSelEx.selectedIndex]?.text || "";
+    document.getElementById("exito-total").textContent = formatCOP(totalFinal);
+    document.getElementById("exito-gps").textContent = gpsData.texto;
+
+    pedidosHoy.push({ nro: nroPedido, cliente: document.getElementById("cli-nombre").value, total: totalFinal });
+    actualizarMetricas();
+    ir("s-exito");
+
+  } catch (e) {
+    ocultarLoading();
+    toast("Error: " + e.message);
+    console.error(e);
+  }
+}
+
+// ============================================================
+// MÉTRICAS DASHBOARD
+// ============================================================
+function actualizarMetricas() {
+  const mPedidos = document.getElementById("m-pedidos");
+  const mTotal = document.getElementById("m-total");
+  const listaDash = document.getElementById("lista-pedidos-dash");
+
+  if (mPedidos) mPedidos.textContent = pedidosHoy.length;
+  if (mTotal) {
+    const total = pedidosHoy.reduce((s, p) => s + (p.total || 0), 0);
+    if (mTotal) mTotal.textContent = total >= 1000000 ? "$" + (total/1000000).toFixed(1) + "M" : formatCOP(total);
+  }
+  if (listaDash) {
+    if (!pedidosHoy.length) {
+      listaDash.innerHTML = '<p style="font-size:13px;color:#888;text-align:center;padding:10px">Sin pedidos hoy</p>';
+    } else {
+      listaDash.innerHTML = pedidosHoy.slice(-5).reverse().map(p =>
+        `<div class="sum-row"><span>${p.cliente}</span><span><span class="chip chip-green">HGI ✓</span></span></div>`
+      ).join("");
+    }
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById("header-sub").textContent = "Iniciar sesión";
+</script>
+</body>
+</html>
