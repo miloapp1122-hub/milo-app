@@ -727,7 +727,7 @@ textarea{resize:none;height:60px}
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
-const BACKEND = 'https://milo-proxy.onrender.com'; // CAMBIA por tu URL de Render
+const BACKEND = 'https://milo-backend.onrender.com'; // CAMBIA por tu URL de Render
 const HGI_BASE = 'https://900405097.hginet.com.co/Api';
 const HGI_USER = '98711025';
 const HGI_PASS = 'C9871';
@@ -787,14 +787,14 @@ async function hacerLogin(){
   if(!u||!p){toast('❌ Ingresa usuario y contraseña');return;}
   loading(true,'Conectando con HGI ERP...');
   try{
-    const r = await fetch(`${HGI_BASE}/token`,{
+    const r = await fetch(`${BACKEND}/hgi/token`,{
       method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:`grant_type=password&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:u,password:p})
     });
     const d = await r.json();
-    if(d.access_token){
-      tokenHGI = d.access_token;
+    if(d.JwtToken||d.access_token){
+      tokenHGI = d.JwtToken||d.access_token;
       loading(false);
       ir('s-dash');
       obtenerGPS();
