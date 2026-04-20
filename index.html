@@ -1626,6 +1626,10 @@ async function cargarHistorialMens(){
 // ─── INIT ─────────────────────────────────────────────────
 document.getElementById('cli-fecha').value = fechaHoy();
 document.getElementById('mens-fecha').value = fechaHoy();
+// Despertar el backend al cargar la página
+fetch(`${BACKEND}/ping`).catch(()=>{});
+setInterval(()=>fetch(`${BACKEND}/ping`).catch(()=>{}), 45000);
+document.getElementById('mens-fecha').value = fechaHoy();
 </script>
 </body>
 </html>
