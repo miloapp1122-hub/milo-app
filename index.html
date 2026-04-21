@@ -648,17 +648,17 @@ async function cargarCatalogo(){
 function filtrarCatalogo(){
   const q=document.getElementById('buscar-producto-cat').value.toLowerCase();
   const lista=catalogoList.filter(p=>{
-    const desc=(p.Descripcion||p.NombreProducto||'').toLowerCase();
-    const cod2=(p.CodigoProducto||p.Codigo||'').toLowerCase();
+    const desc=(p.Descripcion||'').toLowerCase();
+    const cod2=(p.Codigo||'').toLowerCase();
     return desc.includes(q)||cod2.includes(q);
   });
   const el=document.getElementById('lista-catalogo');
   if(!lista.length){el.innerHTML='<p style="font-size:13px;color:#888;text-align:center;padding:10px">Sin resultados</p>';return;}
   el.innerHTML=lista.slice(0,50).map(p=>{
-    const cod3=p.CodigoProducto||p.Codigo||'-';
-    const desc2=p.Descripcion||p.NombreProducto||'-';
-    const precio2=p.PrecioVenta||p.Precio||0;
-    return`<div class="search-item" onclick="agregarProductoDesde('${cod3}','${desc2.replace(/'/g,'')}',${precio2})">
+    const cod3=p.Codigo||'-';
+    const desc2=p.Descripcion||'-';
+    const precio2=p.Precio1||p.Precio2||0;
+    return`<div class="search-item" onclick="agregarProductoDesde('${cod3}','${desc2.replace(/'/g,"\'")}',${precio2})">
       <div class="si-name">${desc2}</div>
       <div class="si-meta">Cod: ${cod3} · ${fmt(precio2)}</div>
     </div>`;}).join('');
@@ -778,9 +778,9 @@ async function buscarProductoHGI(cod){
     if(prod){
       const res=document.getElementById('resultado-scan');
       res.style.background='var(--verde-bg)';
-      const desc=prod.Descripcion||prod.NombreProducto||prod.descripcion||cod;
-      const precio=prod.PrecioVenta||prod.Precio||prod.precio||0;
-      res.innerHTML=`<div style="font-size:13px;font-weight:600;color:var(--verde-text)">${desc}</div><div style="font-size:11px;color:#666">${fmt(precio)} · Cod: ${cod}</div><button onclick="agregarProductoDesde('${cod}','${desc.replace(/'/g,'')}',${precio})" style="margin-top:8px;padding:7px 16px;background:var(--verde);color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer">+ Agregar</button>`;
+      const desc=prod.Descripcion||prod.descripcion||cod;
+      const precio=prod.Precio1||prod.Precio2||prod.Precio||0;
+      res.innerHTML=`<div style="font-size:13px;font-weight:600;color:var(--verde-text)">${desc}</div><div style="font-size:11px;color:#666">${fmt(precio)} · Cod: ${cod}</div><button onclick="agregarProductoDesde('${cod}','${desc.replace(/'/g,"\'")}',${precio})" style="margin-top:8px;padding:7px 16px;background:var(--verde);color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer">+ Agregar</button>`;
     }
   } catch(e){}
 }
