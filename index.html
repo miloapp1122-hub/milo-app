@@ -639,9 +639,7 @@ function llenarSelectAsesor(){
 async function cargarCatalogo(){
   if(!tokenHGI) return;
   try{
-    const r=await fetch(`${BACKEND}/hgi/Productos/Obtener?codigo_producto=*&descripcion=*`,{
-      headers:{'X-HGI-Token':tokenHGI}
-    });
+    const r=await fetch(`${BACKEND}/api/productos?q=*`);
     const d=await r.json();
     catalogoList=Array.isArray(d)?d:(d.productos||d.Productos||[]);
     filtrarCatalogo();
@@ -649,14 +647,21 @@ async function cargarCatalogo(){
 }
 function filtrarCatalogo(){
   const q=document.getElementById('buscar-producto-cat').value.toLowerCase();
-  const lista=catalogoList.filter(p=>(p.Descripcion||'').toLowerCase().includes(q)||(p.Codigo||'').toLowerCase().includes(q));
+  const lista=catalogoList.filter(p=>{
+    const desc=(p.Descripcion||p.NombreProducto||'').toLowerCase();
+    const cod2=(p.CodigoProducto||p.Codigo||'').toLowerCase();
+    return desc.includes(q)||cod2.includes(q);
+  });
   const el=document.getElementById('lista-catalogo');
   if(!lista.length){el.innerHTML='<p style="font-size:13px;color:#888;text-align:center;padding:10px">Sin resultados</p>';return;}
-  el.innerHTML=lista.slice(0,50).map(p=>`
-    <div class="search-item" onclick="agregarProductoDesde('${p.Codigo}','${(p.Descripcion||'').replace(/'/g,'')}',${p.Precio||0})">
-      <div class="si-name">${p.Descripcion||'-'}</div>
-      <div class="si-meta">Cod: ${p.Codigo||'-'} · ${fmt(p.Precio||0)}</div>
-    </div>`).join('');
+  el.innerHTML=lista.slice(0,50).map(p=>{
+    const cod3=p.CodigoProducto||p.Codigo||'-';
+    const desc2=p.Descripcion||p.NombreProducto||'-';
+    const precio2=p.PrecioVenta||p.Precio||0;
+    return`<div class="search-item" onclick="agregarProductoDesde('${cod3}','${desc2.replace(/'/g,'')}',${precio2})">
+      <div class="si-name">${desc2}</div>
+      <div class="si-meta">Cod: ${cod3} · ${fmt(precio2)}</div>
+    </div>`;}).join('');
 }
 
 // CLIENTES - usa proxy
@@ -767,13 +772,15 @@ function buscarPorEAN(){
 async function buscarProductoHGI(cod){
   if(!tokenHGI)return;
   try{
-    const r=await fetch(`${BACKEND}/hgi/Productos/Obtener?codigo_producto=${encodeURIComponent(cod)}`,{headers:{'X-HGI-Token':tokenHGI}});
+    const r=await fetch(`${BACKEND}/api/productos?q=${encodeURIComponent(cod)}`);
     const d=await r.json();
     const prod=(Array.isArray(d)?d:(d.productos||d.Productos||[]))[0];
     if(prod){
       const res=document.getElementById('resultado-scan');
       res.style.background='var(--verde-bg)';
-      res.innerHTML=`<div style="font-size:13px;font-weight:600;color:var(--verde-text)">${prod.Descripcion||prod.descripcion}</div><div style="font-size:11px;color:#666">${fmt(prod.Precio||prod.precio||0)} · Cod: ${cod}</div><button onclick="agregarProductoDesde('${cod}','${(prod.Descripcion||prod.descripcion||'').replace(/'/g,'')}',${prod.Precio||prod.precio||0})" style="margin-top:8px;padding:7px 16px;background:var(--verde);color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer">+ Agregar</button>`;
+      const desc=prod.Descripcion||prod.NombreProducto||prod.descripcion||cod;
+      const precio=prod.PrecioVenta||prod.Precio||prod.precio||0;
+      res.innerHTML=`<div style="font-size:13px;font-weight:600;color:var(--verde-text)">${desc}</div><div style="font-size:11px;color:#666">${fmt(precio)} · Cod: ${cod}</div><button onclick="agregarProductoDesde('${cod}','${desc.replace(/'/g,'')}',${precio})" style="margin-top:8px;padding:7px 16px;background:var(--verde);color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer">+ Agregar</button>`;
     }
   } catch(e){}
 }
@@ -831,14 +838,21 @@ async function consultarCartera(){
 }
 function generarDemoCartera(nit){return{facturas:[{Numero:'FAC-2025-0341',Fecha:'2025-03-01',Vencimiento:'2025-04-01',Saldo:3500000,DiasVencidos:19},{Numero:'FAC-2025-0298',Fecha:'2025-02-15',Vencimiento:'2025-03-17',Saldo:1200000,DiasVencidos:34},{Numero:'FAC-2025-0412',Fecha:'2025-04-05',Vencimiento:'2025-05-05',Saldo:2800000,DiasVencidos:0}]};}
 function renderCarteraCompleta(cont,data,nit){
-  const facturas=Array.isArray(data)?data:(data.facturas||data.Facturas||[]);
+  const raw=Array.isArray(data)?data:(data.facturas||data.Facturas||[]);
+  // Deduplicar por Documento y filtrar saldos positivos
+  const vistos=new Set();
+  const facturas=raw.filter(f=>{
+    const k=f.Documento||f.documento;
+    if(vistos.has(k)||!(f.SaldoFinal>0))return false;
+    vistos.add(k);return true;
+  });
   if(!facturas.length){cont.innerHTML=`<div class="card" style="text-align:center;padding:24px"><div style="font-size:36px;margin-bottom:10px">✅</div><p style="font-weight:600;color:var(--verde-text)">Sin cartera pendiente</p><p style="font-size:13px;color:#888;margin-top:6px">NIT: ${nit}</p></div>`;return;}
-  const totalCartera=facturas.reduce((a,f)=>a+(f.Saldo||f.saldo||0),0);
-  const totalVenc=facturas.filter(f=>(f.DiasVencidos||f.diasVencidos||0)>0).reduce((a,f)=>a+(f.Saldo||f.saldo||0),0);
-  const totalPor=facturas.filter(f=>(f.DiasVencidos||f.diasVencidos||0)<=0).reduce((a,f)=>a+(f.Saldo||f.saldo||0),0);
+  const totalCartera=facturas.reduce((a,f)=>a+(f.SaldoFinal||0),0);
+  const totalVenc=facturas.filter(f=>(f.Edad||0)>0).reduce((a,f)=>a+(f.SaldoFinal||0),0);
+  const totalPor=facturas.filter(f=>(f.Edad||0)<=0).reduce((a,f)=>a+(f.SaldoFinal||0),0);
   const estadoGlobal=totalVenc>0?'vencido':totalCartera>0?'vigente':'al-dia';
   const chips={vencido:`<span class="chip chip-red">⚠️ Con cartera vencida</span>`,vigente:`<span class="chip chip-amber">📅 Cartera vigente</span>`,'al-dia':`<span class="chip chip-green">✅ Al día</span>`};
-  cont.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><div style="background:var(--verde);color:white;padding:12px 14px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700;font-size:15px">NIT: ${nit}</div><div style="font-size:11px;opacity:.8">${facturas.length} facturas</div></div>${chips[estadoGlobal]}</div><div style="padding:14px"><div class="cartera-resumen"><div class="c-metric"><div class="c-metric-label">Total</div><div class="c-metric-val" style="color:#222">${fmt(totalCartera)}</div></div><div class="c-metric"><div class="c-metric-label">Vencido</div><div class="c-metric-val" style="color:var(--rojo)">${fmt(totalVenc)}</div></div><div class="c-metric"><div class="c-metric-label">Por vencer</div><div class="c-metric-val" style="color:var(--ambar)">${fmt(totalPor)}</div></div></div>${facturas.map(f=>{const dias=f.DiasVencidos||f.diasVencidos||0;const cls=dias>60?'chip-red':dias>0?'chip-amber':'chip-green';return`<div class="factura-row"><div style="flex:1"><div class="factura-num">Factura ${f.Numero||f.numero}</div><div class="factura-meta">Vence: ${f.Vencimiento||f.Fecha||'-'}</div></div><div style="text-align:right"><div style="font-size:14px;font-weight:700">${fmt(f.Saldo||f.saldo||0)}</div><span class="chip ${cls}" style="font-size:10px">${dias>0?dias+'d venc.':'Vigente'}</span></div></div>`;}).join('')}</div></div><div class="card"><p class="card-title">Gestión rápida</p><button class="gestion-btn" onclick="irGestionRapida('${nit}','llamada')"><div class="gestion-icon" style="background:var(--azul-bg)">📞</div><span>Registrar llamada de cobro</span></button><button class="gestion-btn" onclick="irGestionRapida('${nit}','whatsapp')"><div class="gestion-icon" style="background:var(--verde-bg)">💬</div><span>Enviar WhatsApp de cobro</span></button><button class="gestion-btn" onclick="irGestionRapida('${nit}','acuerdo')"><div class="gestion-icon" style="background:var(--ambar-bg)">🤝</div><span>Registrar acuerdo de pago</span></button></div>`;
+  cont.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><div style="background:var(--verde);color:white;padding:12px 14px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700;font-size:15px">NIT: ${nit}</div><div style="font-size:11px;opacity:.8">${facturas.length} documentos</div></div>${chips[estadoGlobal]}</div><div style="padding:14px"><div class="cartera-resumen"><div class="c-metric"><div class="c-metric-label">Total</div><div class="c-metric-val" style="color:#222">${fmt(totalCartera)}</div></div><div class="c-metric"><div class="c-metric-label">Vencido</div><div class="c-metric-val" style="color:var(--rojo)">${fmt(totalVenc)}</div></div><div class="c-metric"><div class="c-metric-label">Por vencer</div><div class="c-metric-val" style="color:var(--ambar)">${fmt(totalPor)}</div></div></div>${facturas.map(f=>{const dias=f.Edad||0;const cls=dias>60?'chip-red':dias>0?'chip-amber':'chip-green';const venc=f.FechaVencimiento?f.FechaVencimiento.split('T')[0]:'-';return`<div class="factura-row"><div style="flex:1"><div class="factura-num">Doc. ${f.Documento||'-'}</div><div class="factura-meta">Vence: ${venc}</div></div><div style="text-align:right"><div style="font-size:14px;font-weight:700">${fmt(f.SaldoFinal||0)}</div><span class="chip ${cls}" style="font-size:10px">${dias>0?dias+'d venc.':'Vigente'}</span></div></div>`;}).join('')}</div></div><div class="card"><p class="card-title">Gestión rápida</p><button class="gestion-btn" onclick="irGestionRapida('${nit}','llamada')"><div class="gestion-icon" style="background:var(--azul-bg)">📞</div><span>Registrar llamada de cobro</span></button><button class="gestion-btn" onclick="irGestionRapida('${nit}','whatsapp')"><div class="gestion-icon" style="background:var(--verde-bg)">💬</div><span>Enviar WhatsApp de cobro</span></button><button class="gestion-btn" onclick="irGestionRapida('${nit}','acuerdo')"><div class="gestion-icon" style="background:var(--ambar-bg)">🤝</div><span>Registrar acuerdo de pago</span></button></div>`;
 }
 function irGestionRapida(nit,tipo){carteraTab(document.querySelectorAll('#s-cartera .tab')[1],'ct-gestion');document.getElementById('gest-nit').value=nit;document.getElementById('gest-tipo').value=tipo;document.getElementById('gest-fecha').value=fechaHoy();}
 async function buscarCarteraDash(){
