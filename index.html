@@ -603,7 +603,7 @@ function mensTab(btn,tabId){
 async function cargarVendedores(){
   if(!tokenHGI) return;
   try{
-    const r=await fetch(`${BACKEND}/hgi/Vendedores/Obtener?codigo_vendedor=0`,{
+    const r=await fetch(`${BACKEND}/hgi/Vendedores/Obtener?codigo_vendedor=%2A`,{
       headers:{'X-HGI-Token':tokenHGI}
     });
     const d=await r.json();
