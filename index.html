@@ -603,9 +603,7 @@ function mensTab(btn,tabId){
 async function cargarVendedores(){
   if(!tokenHGI) return;
   try{
-    const r=await fetch(`${BACKEND}/hgi/Vendedores/Obtener?codigo_vendedor=%2A`,{
-      headers:{'X-HGI-Token':tokenHGI}
-    });
+    const r=await fetch(`${BACKEND}/api/vendedores`);
     const d=await r.json();
     vendedoresList=Array.isArray(d)?d:(d.vendedores||d.Vendedores||[]);
     // Filtrar solo activos (Estado=1)
@@ -668,9 +666,7 @@ async function buscarCliente(){
   if(!tokenHGI){toast('⚠️ Sin conexión HGI');return;}
   loading(true,'Buscando cliente...');
   try{
-    const r=await fetch(`${BACKEND}/hgi/Terceros/Busqueda?filtro_busqueda=${encodeURIComponent(q)}`,{
-      headers:{'X-HGI-Token':tokenHGI}
-    });
+    const r=await fetch(`${BACKEND}/api/clientes?q=${encodeURIComponent(q)}`);
     const d=await r.json();
     loading(false);
     const clientes=Array.isArray(d)?d:(d.clientes||d.Clientes||d.terceros||d.Terceros||[]);
@@ -708,9 +704,7 @@ async function consultarCarteraCliente(nit){
 }
 async function fetchCarteraHGI(nit){
   if(!tokenHGI) throw new Error('Sin token');
-  const r=await fetch(`${BACKEND}/hgi/Cartera/Obtener?anyo=*&periodo=*&codigo_tercero=${encodeURIComponent(nit)}&codigo_local=0&tipo_cartera=0&grupo=0&codigo_clase=0`,{
-    headers:{'X-HGI-Token':tokenHGI}
-  });
+  const r=await fetch(`${BACKEND}/api/cartera?nit=${encodeURIComponent(nit)}`);
   return r.json();
 }
 function renderCarteraEnPedido(cont,data){
